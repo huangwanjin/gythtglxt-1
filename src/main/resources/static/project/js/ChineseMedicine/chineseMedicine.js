@@ -163,7 +163,7 @@
                     var myChineseMedicineModal = modalUtil.init(myViewChineseMedicineModalData);
                     $("#name").val(row.name);
                     $("#alias").val(row.alias);
-                    $("#classification").val(row.classification);
+                    $("#classification").val(p2[row.classification].text);
                     $("#harvesting").val(row.harvesting);
                     $("#taste").val(row.taste);
                     $("#merTropism").val(row.merTropism);
