@@ -426,11 +426,16 @@ a{
     margin-top: 6px !important;
     color: #775637;
 }
+.datetimepicker{
+    font-size: 20px;
+}
 th.next {
-    background: #C8C8C8;
+    background-image: url("../../images/new/right.png");
+    background-size: contain;
 }
 th.prev {
-    background: #C8C8C8;
+    background-image: url("../../images/new/left.png");
+    background-size: contain;
 }
 input, select{
     border-color: #c4d3d4;
