@@ -8,13 +8,20 @@
             var aParam = {
             };
 
-
+            if(sessionStorage.getItem("rolename") == "管理员"){
+                $('#btn_addTask').attr('style',"display:block");
+            }
             //操作
             function operation(value, row, index){
-                return [
-                    '<a class="edit" style="margin:0 1em;text-decoration: none;color:#775637;" data-toggle="modal" data-target="" >修改</a>',
-                    '<a class="delete" style="margin:0 1em;text-decoration: none;color:#775637;" data-toggle="modal" data-target="" >删除</a>',
-                ].join('');
+                if(sessionStorage.getItem("rolename") == "管理员"){
+                    return [
+                        '<a class="edit" style="margin:0 1em;text-decoration: none;color:#775637;" data-toggle="modal" data-target="" >修改</a>',
+                        '<a class="delete" style="margin:0 1em;text-decoration: none;color:#775637;" data-toggle="modal" data-target="" >删除</a>',
+                    ].join('');
+                }else{
+                    return [].join('');
+                }
+
             }
 
             //修改事件
@@ -25,8 +32,15 @@
                 },
 
                 'click .delete': function (e, value, row, index) {
+                    var deleteModal = "";
+                    if (new Date(row.registerDate) < new Date() || row.registerDate==null){
+                        deleteModal = "myDeleteDoctor";
+                    }
+                    else {
+                        deleteModal = "myDeleteDoctorSignalSource";
+                    }
                     var myDeleteModalData ={
-                        modalBodyID : "myDeleteChineseMedicine",
+                        modalBodyID : deleteModal,
                         modalTitle : "删除医生",
                         modalClass : "modal-lg",
                         confirmButtonClass : "btn-danger",
@@ -43,7 +57,17 @@
                                             return alertUtil.error("文件删除失败");
                                         }
                                     },false,"","get");
-                                    alertUtil.info("删除医生信息成功");
+                                    var submitConfirmModal = {
+                                        modalBodyID :"myPassSuccessTip",
+                                        modalTitle : "提示",
+                                        modalClass : "modal-lg",
+                                        cancelButtonStyle: "display:none",
+                                        modalConfirmFun:function (){
+                                            return true;
+                                        }
+                                    }
+                                    var submitConfirm = modalUtil.init(submitConfirmModal);
+                                    submitConfirm.show();
                                     isSuccess = true;
                                     refreshTable();
                                 }
@@ -67,8 +91,8 @@
             $("#chargePersonSearch").selectUtil(pl);
 
             var aCol = [
-                {field: 'doctorName', title: '专家名称'},
-                {field: 'filePath', title: '专家照片',formatter:function (value, row, index) {
+                {field: 'doctorName', title: '医生姓名'},
+                {field: 'filePath', title: '医生照片',formatter:function (value, row, index) {
                         if(value == "已经损坏了"){
                             return '<p>'+value+'</p>';
                         }else{
@@ -77,7 +101,6 @@
                     }},
                 {field: 'doctorTitle', title: '职称'},
                 {field: 'doctorTreatment', title: '擅长治疗'},
-                {field: 'numType', title: '号别'},
                 {field: 'action',  title: '操作',formatter: operation,events:orgEvents}
             ];
 
@@ -88,9 +111,30 @@
                 myTable.free();
                 myTable = bootstrapTableUtil.myBootStrapTableInit("table", url, param, aCol);
             }
-            bootstrapTableUtil.globalSearch("table",url,aParam, aCol);
-            var allTableData = $("#table").bootstrapTable("getData");
-            localStorage.setItem('2',JSON.stringify(allTableData))
-            obj2=JSON.parse(localStorage.getItem("2"));
+
+            $("#btnSearch").unbind().on('click',function() {
+                var newArry = [];
+                var str = document.getElementById("taskNameSearch").value.toLowerCase();
+                var allTableData = JSON.parse(localStorage.getItem("2"));
+                if(str.indexOf("请输入")!=-1){
+                    str=""
+                }
+                for (var i in allTableData) {
+                    for (var v in aCol){
+                        var textP = allTableData[i][aCol[v].field];
+                        if (textP == null || textP == undefined || textP == '') {
+                            textP = "1";
+                        }
+                        console.log(textP.search(str));
+                        if(textP.search(str) != -1){
+                            newArry.push(allTableData[i])
+                        }
+                    }
+                }
+                var newArr=new Set(newArry)
+                newArry=Array.from(newArr)
+                $("#table").bootstrapTable("load", newArry);
+
+            })
         })
 })();

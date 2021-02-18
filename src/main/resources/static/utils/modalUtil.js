@@ -110,7 +110,7 @@
             data.modalConfirmID = stringUtil.getUUID();
             var defaultConfirmButtonClass = "btn ";
 
-            data.confirmButtonClass = defaultConfirmButtonClass + (stringUtil.isBlank(data.confirmButtonClass) ? "btn-primary" : data.confirmButtonClass);
+            data.confirmButtonClass = defaultConfirmButtonClass + (stringUtil.isBlank(data.confirmButtonClass) ? "btn-danger" : data.confirmButtonClass);
 
 
 
@@ -123,6 +123,7 @@
 
             if(!objectUtil.strIsBlank(data.modalConfirmFun)){
                 $("#"+data.modalConfirmID).on("click",function () {
+                    $(this).off("click");
                     if(data.modalConfirmFun()) {
                         $("#"+data.modalID).modal("hide");
                     }
@@ -178,7 +179,8 @@
 
 
         return {
-            init: _init
+            init: _init,
+            modalDes: _myModalDestory
         };
 
     });

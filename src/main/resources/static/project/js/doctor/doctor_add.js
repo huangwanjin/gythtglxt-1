@@ -1,6 +1,6 @@
 (function () {
-    require(['jquery','objectUtil','ajaxUtil','alertUtil','stringUtil','dictUtil','fileUtil','uploadImg'],
-        function (jquery,objectUtil,ajaxUtil,alertUtil,stringUtil,dictUtil,fileUtil,uploadImg) {
+    require(['jquery','objectUtil','ajaxUtil','alertUtil','stringUtil','dictUtil','fileUtil','uploadImg','modalUtil'],
+        function (jquery,objectUtil,ajaxUtil,alertUtil,stringUtil,dictUtil,fileUtil,uploadImg,modalUtil) {
             /*q全局变量*/
             var tempdata = JSON.parse(localStorage.getItem("rowData"));
             var updateStatus = isUpdate()
@@ -11,18 +11,12 @@
             uploadImg.init();
             (function init() {
                 if (isUpdate()){
+                    $(".titleCSS").text("修改服务团队医生信息");
                     var tempdata = JSON.parse(localStorage.getItem("rowData"));
                     uploadImg.setImgSrc(tempdata.filePath)
-
                     $("#doctorName").val(tempdata.doctorName);
                     $("#doctorTitle").val(tempdata.doctorTitle);
                     $("#doctorTreatment").val(tempdata.doctorTreatment);
-                    $("#numType").find("option").each(function (data) {
-                        var $this = $(this);
-                        if($this.text() == tempdata.numType) {
-                            $this.attr("selected", true);
-                        }
-                    });
                 }
             }());
             function isUpdate() {
@@ -37,43 +31,62 @@
 
             /*处理保存按钮*/
             $("#btn_insert").unbind().on('click',function () {
-                var entity;
-                var requestUrl = "/doctor/doctor";
-                var operateMessage;
-                var requestType;
+                var submitConfirmModal = {
+                    modalBodyID :"myPublishDoctor",
+                    modalTitle : "提示",
+                    modalClass : "modal-lg",
+                    cancelButtonStyle: "display:none",
+                    modalConfirmFun:function (){
+                        var entity;
+                        var requestUrl = "/doctor/doctor";
+                        var requestType;
 
-                if (!updateStatus){
-                    operateMessage = "新增医生信息成功";
-                    entity = {
-                        itemcode: stringUtil.getUUID(),
-                    };
-                    requestType = "post";
-                }
-                else {
-                    operateMessage = "更新医生信息成功";
-                    entity = {
-                        itemid: tempdata.itemid,
-                        itemcode: tempdata.itemcode
-                    };
-                    requestType = "put";
-                }
-                entity["doctorName"] = $("#doctorName").val();
-                entity["doctorTitle"] = $("#doctorTitle").val();
-                entity["doctorTreatment"] = $("#doctorTreatment").val();
-                entity["deptCode"] = $("#deptCode").val();
-                entity["numType"] = numType[$("#numType").val()].text;
+                        if (!updateStatus){
+                            entity = {
+                                itemcode: stringUtil.getUUID(),
+                            };
+                            requestType = "post";
+                        }
+                        else {
+                            entity = {
+                                itemid: tempdata.itemid,
+                                itemcode: tempdata.itemcode
+                            };
+                            requestType = "put";
+                        }
+                        entity["doctorName"] = $("#doctorName").val();
+                        entity["doctorTitle"] = $("#doctorTitle").val();
+                        entity["doctorTreatment"] = $("#doctorTreatment").val();
+                        entity["deptCode"] = $("#deptCode").val();
 
 
-                fileUtil.handleFile(updateStatus, entity.itemcode, uploadImg.getFiles()[0]);
+                        fileUtil.handleFile(updateStatus, entity.itemcode, uploadImg.getFiles()[0]);
 
-                ajaxUtil.myAjax(null,requestUrl,entity,function (data) {
-                    if(ajaxUtil.success(data)){
-                        alertUtil.info(operateMessage);
-                        orange.redirect(jumpUrl);
-                    }else {
-                        alertUtil.alert(data.msg);
+                        ajaxUtil.myAjax(null,requestUrl,entity,function (data) {
+                            if(ajaxUtil.success(data)){
+                                var submitConfirmModal = {
+                                    modalBodyID :"myPassSuccessTip",
+                                    modalTitle : "提示",
+                                    modalClass : "modal-lg",
+                                    cancelButtonStyle: "display:none",
+                                    modalConfirmFun:function (){
+                                        orange.redirect(jumpUrl);
+                                        return true;
+                                    }
+                                }
+                                var submitConfirm = modalUtil.init(submitConfirmModal);
+                                submitConfirm.show();
+
+                            }else {
+                                alertUtil.alert(data.msg);
+                            }
+                        },false,true,requestType);
+                        return false;
                     }
-                },false,true,requestType);
+                }
+                var submitConfirm = modalUtil.init(submitConfirmModal);
+                submitConfirm.show();
+                return false;
             });
 
         });

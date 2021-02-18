@@ -78,7 +78,6 @@
                     alertUtil.error(data.responseJSON.message);
                 }
 
-                console.log("请求失败URI："+ url);
             };
             _setting.complete = function (XMLHttpRequest) {
                 if (aButton != null) {
@@ -105,6 +104,52 @@
                 async: false,
                 success:function(data){
                     if(data && data.code == successCode){}else{
+                        data.msg == "您未上传图片或者附件！"?
+                            alertUtil.warning(data.msg) :
+                            alertUtil.error(data.msg)
+                    }
+                },
+                error: function(data){
+                    alertUtil.error(data.msg)
+                }
+            });
+        }
+
+        function upload_multi(dataCode, files, uploader,uploaderCode){
+            $.ajax({
+                url:"/file/delete?dataCode="+dataCode,
+                type:'GET',
+                processData: false,   // jQuery不要去处理发送的数据
+                contentType: false,   // jQuery不要去设置Content-Type请求头
+                async:false,
+                success:function(data){
+                    if(data && data.code == successCode){
+                        for (var file of files){
+                            var formData = new FormData();
+                            formData.append("dataCode",dataCode);
+                            formData.append("file",file);
+                            formData.append("itemcode",stringUtil.getUUID());
+                            formData.append("uploader",sessionStorage.getItem("username"));
+                            formData.append("uploaderCode",sessionStorage.getItem("itemcode"));
+                            $.ajax({
+                                url:"/file/upload-multi",
+                                type:'POST',
+                                data: formData,
+                                processData: false,   // jQuery不要去处理发送的数据
+                                contentType: false,   // jQuery不要去设置Content-Type请求头
+                                async: false,
+                                success:function(data){
+                                    if(data && data.code == successCode){}else{
+                                        if(data.msg == "您未上传图片或者附件！")
+                                            alertUtil.warning(data.msg)
+                                    }
+                                },
+                                error: function(data) {
+                                    alertUtil.warning(data.msg)
+                                }
+                            });
+                        }
+                    }else{
                         alertUtil.error(data.msg);
                     }
                 },
@@ -112,6 +157,8 @@
                     alertUtil.error(data.msg)
                 }
             });
+
+
         }
 
         function deleteFile(dataCode){
@@ -153,7 +200,8 @@
             fileAjax: fileAjax,
             successCode:successCode,
             deleteFile: deleteFile,
-            updateFile: updateFile
+            updateFile: updateFile,
+            upload_multi: upload_multi
         }
     })
 })();

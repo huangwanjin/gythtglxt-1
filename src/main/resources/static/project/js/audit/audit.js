@@ -97,7 +97,18 @@
                     };
                     data = row;
                     let myTravelModal = modalUtil.init(modalData);
-                    $("#myImg").attr('src', data.filePath);
+                    var filePath = []
+                    ajaxUtil.myAjax(null,"/audit/hospital_img?itemcode="+data.itemcode,null,function (res) {
+                        filePath = res.data;
+                    },false,true,"get")
+                    let i = 1;
+                    for (const t of filePath){
+                        $("#myImg"+i.toString()).attr('src',t)
+                        i = i + 1
+                    }
+                    for (;i<6;i++){
+                        $("#myImg"+i.toString()).hide()
+                    }
                     $("#hospitalName").val(data.hospitalName);
                     $("#hospitalPhone").val(data.hospitalPhone);
                     $("#address").val(data.hospitalPro + data.hospitalCity + data.hospitalCountry + data.hospitalAdress);
@@ -109,15 +120,47 @@
 
                 },
                 'click .pass': function (e, value, row, index) {
-                    var param = {
-                        itemid: row.itemid,
-                        itemcode: row.itemcode,
-                        status: pass
-                    };
-                    ajaxUtil.myAjax(null,auditUrl,param,function (data) {
-                        alertUtil.info("修改成功");
-                        refreshTable()
-                    }, true,true,"put")
+
+                    var bodyId = "";
+                    if (rolename === "县级"){
+                        bodyId = "myAuditPassProtectionCity"
+                    } else if (rolename === "市级"){
+                        bodyId = "myAuditPassProtectionPre"
+                    } else if (rolename === "省级") {
+                        bodyId = "myPublishProtection"
+                    }
+                    var passConfirmModal = {
+                        modalBodyID: bodyId,
+                        modalTitle: "提示",
+                        modalClass : "modal-lg",
+                        modalConfirmFun: function () {
+                            var param = {
+                                itemid: row.itemid,
+                                itemcode: row.itemcode,
+                                status: pass
+                            };
+                            ajaxUtil.myAjax(null,auditUrl,param,function (data) {
+                                alertUtil.info("修改成功");
+                                refreshTable()
+                            }, true,true,"put")
+                            var submitConfirmModal = {
+                                modalBodyID :"myPassSuccessTip",
+                                modalTitle : "提示",
+                                modalClass : "modal-lg",
+                                cancelButtonStyle: "display:none",
+                                confirmButtonClass: "btn-danger",
+                                modalConfirmFun:function (){
+                                    return true;
+                                }
+                            }
+                            passConfirm.hide();
+                            var submitConfirm = modalUtil.init(submitConfirmModal);
+                            submitConfirm.show();
+                        }
+                    }
+                    var passConfirm = modalUtil.init(passConfirmModal);
+                    passConfirm.show()
+
                 },
                 'click .nopass' : function(e, value, row, index) {
                     var param = {
@@ -128,15 +171,20 @@
                     };
 
                     var myModalData ={
-                        modalBodyID : "myInputReason", //公用的在后面给span加不同的内容就行了，其他模块同理
+                        modalBodyID : "myResonable",
                         modalTitle : "输入理由",
                         modalClass : "modal-lg",
                         modalConfirmFun:function () {
-                            param.reason = $("#inputReason").val();
+                            param.reason = $("#reason").val();
                             ajaxUtil.myAjax(null,auditUrl,param,function (data) {
-                                alertUtil.info("修改成功");
-                                myTravelModal.hide();
-                                refreshTable();
+                                if (ajaxUtil.success(data)){
+                                    alertUtil.info("修改成功");
+                                    myTravelModal.hide();
+                                    refreshTable();
+                                }else {
+                                    alertUtil.error("请输入理由");
+                                }
+
                             }, true,true,"put")
                         },
                     };
@@ -153,7 +201,7 @@
                         confirmButtonStyle: "display:none",
                     };
                     var myTravelModal = modalUtil.init(myModalData);
-                    $("#reason").html(row.reason);
+                    $("#viewReason").html(row.reason);
 
                     myTravelModal.show();
                 },
@@ -187,6 +235,35 @@
                 myTable = bootstrapTableUtil.myBootStrapTableInit("table", getUrl, param, aCol);
             }
 
-            bootstrapTableUtil.globalSearch("table",getUrl,aParam, aCol);
+            $("#btnSearch").unbind().on('click',function() {
+                var newArry = [];
+                var str = document.getElementById("taskNameSearch").value.toLowerCase();
+                var allTableData = JSON.parse(localStorage.getItem("2"));
+                if(str.indexOf("请输入")!=-1){
+                    str=""
+                }
+                for (var i in allTableData) {
+                    for (var v in aCol){
+                        var textP = allTableData[i][aCol[v].field];
+                        //状态条件判断,与表格字段的状态一致,这里根据自己写的修改
+                        // console.log("addstr:"+addstr)
+                        // console.log("status:"+status)
+                        //调试时可以先打印出来，进行修改
+                        if(typeof textP == "object") continue;
+                        else if(typeof textP == "number") textP = textP.toString();
+                        //当存在时将条件改为flase
+                        if (textP == null || textP == undefined || textP == '') {
+                            textP = "1";
+                        }
+                        if(textP.search(str) != -1){
+                            newArry.push(allTableData[i])
+                        }
+                    }
+                }
+                var newArr=new Set(newArry)
+                newArry=Array.from(newArr)
+                $("#table").bootstrapTable("load", newArry);
+
+            })
         })
 })();
