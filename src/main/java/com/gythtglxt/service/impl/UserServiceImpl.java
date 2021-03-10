@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * @Author wanglx
@@ -63,8 +64,13 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(result.getErrMsg(), EmBusinessError.PARAMETER_VALIDATION_ERROR);
         }
         // 验证手机号码
-        if (!MobileUtil.checkPhone(userDto.getMobilePhone())) {
-            throw new BusinessException("手机号码不正确", EmBusinessError.MOBILEPHONE_ERROR);
+        if (!MobileUtil.checkPhone(userDto.getMobilePhone()) && !MobileUtil.isPhone(userDto.getMobilePhone())) {
+            throw new BusinessException("号码不正确", EmBusinessError.MOBILEPHONE_ERROR);
+        }
+        //用户账号：字母开头，至少5位，别超过12个字符
+        Pattern reg = Pattern.compile("^[a-zA-Z]([\\s\\S]{4,11})$");
+        if (!reg.matcher(userDto.getUsername()).matches()){
+            throw new BusinessException("用户账号须以字母开头，长度为5-12位", EmBusinessError.USERNAME_ERROR);
         }
         // 用户名的唯一性
         UserDO userDO = userDOMapper.selectByUsername(userDto.getUsername());
@@ -139,6 +145,7 @@ public class UserServiceImpl implements UserService {
         userDO.setItemcode(userItemCode);
         userDO.setOrgCode(userDto.getOrgCode());
         userDO.setUsername(userDto.getUsername());
+        userDO.setName(userDto.getOrgName());
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         String password = passwordEncoder.encode(userDto.getPassword());
         userDO.setSalt(userDto.getUsername());// 将 登陆账号 设置为 盐，存放到数据库中
@@ -179,12 +186,8 @@ public class UserServiceImpl implements UserService {
         userDOKey.setItemcode(userDO.getItemcode());
         userDOMapper.deleteByPrimaryKey(userDOKey);
         //删除hospital
-        HospitalDO hospitalDO = hospitalDOMapper.selectByHospitalName(userDtO.getOrgName());
-        if (hospitalDO != null){
-            HospitalDOKey hospitalDOKey = new HospitalDOKey();
-            hospitalDOKey.setItemid(hospitalDO.getItemid());
-            hospitalDOKey.setItemcode(hospitalDO.getItemcode());
-            hospitalDOMapper.deleteByPrimaryKey(hospitalDOKey);
+        if (!StringUtils.isBlank(userDtO.getOrgCode())){
+            hospitalDOMapper.deleteByHospitalNameAndCode(userDtO.getOrgName(),userDtO.getOrgCode());
         }
     }
 
@@ -272,12 +275,15 @@ public class UserServiceImpl implements UserService {
         UserDO userDO = userDOMapper.selectByUsername(usernameUtil.getOperateUser());
 
         String mobilePhone = updatePwdDto.getMobilePhone();
-        if (MobileUtil.checkPhone(mobilePhone)) {
+        if (MobileUtil.checkPhone(mobilePhone) || MobileUtil.isPhone(userDO.getMobilephone())) {
+            if (!updatePwdDto.getMobilePhone().equals(userDO.getMobilephone())){
+                throw new BusinessException("输入的电话号码与预留的不一致，请重新输入！", EmBusinessError.OLDPASSWORD_ERROR);
+            }
             String oldPassword = updatePwdDto.getPassword();// 输入的原密码
             BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-            oldPassword = passwordEncoder.encode(oldPassword);
+            //oldPassword = passwordEncoder.encode(oldPassword);
             // 数据库查询到的原密码和输入的原密码比对
-            if (userDO.getPassword().equals(oldPassword)) {
+            if (passwordEncoder.matches(oldPassword,userDO.getPassword())) {
                 updatePwdDto.setNewPassword(passwordEncoder.encode(updatePwdDto.getNewPassword()));
                 userDOMapper.updatePasswordByMobilePhone(updatePwdDto.getNewPassword(), mobilePhone);
                 return new ResponseData(EmBusinessError.success);
@@ -305,14 +311,18 @@ public class UserServiceImpl implements UserService {
         // 验证通过返回 null，不通过则返回一个 字符串，
         // 所以利用判空来判断身份证号码是否合法
         String isValidIDCardNo = IDUtil.IdentityCardVerification(userDO.getIdcardNo());
-        if (StringUtils.isEmpty(isValidIDCardNo)) {
+        if (!StringUtils.isEmpty(isValidIDCardNo)) {
             throw new BusinessException(isValidIDCardNo, EmBusinessError.IDNO_ERROR);
         }
         // 验证电话是否正确
-        if (!MobileUtil.checkPhone(userDO.getMobilephone()) && !StringUtils.isEmpty(userDO.getMobilephone())) {
+        if (!MobileUtil.checkPhone(userDO.getMobilephone()) && !MobileUtil.isPhone(userDO.getMobilephone())
+                && !StringUtils.isEmpty(userDO.getMobilephone())) {
             throw new BusinessException("手机号码不正确！", EmBusinessError.MOBILEPHONE_ERROR);
         }
 
+        if (userDO.getPortrait() == ""){
+            userDO.setPortrait(null);
+        }
         UserSessionDto userSessionDto = (UserSessionDto) request.getSession().getAttribute("user");
         userDO.setItemid(userSessionDto.getItemid());
         userDO.setItemcode(userSessionDto.getItemcode());

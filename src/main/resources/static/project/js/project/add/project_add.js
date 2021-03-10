@@ -1,6 +1,6 @@
 (function () {
-    require(['jquery','objectUtil','ajaxUtil','alertUtil','stringUtil','fileUtil','uploadImg'],
-        function (jquery,objectUtil,ajaxUtil,alertUtil,stringUtil,fileUtil,uploadImg) {
+    require(['jquery','objectUtil','ajaxUtil','alertUtil','stringUtil','fileUtil','uploadImg','modalUtil'],
+        function (jquery,objectUtil,ajaxUtil,alertUtil,stringUtil,fileUtil,uploadImg,modalUtil) {
             const editor = objectUtil.wangEditorUtil();
             // uploadImg.init();
             var pathUrl = "/project/project";
@@ -19,7 +19,7 @@
                 var projectEntity;
                 var operateMessage;
                 if(!isUpdate()){
-                    operateMessage = "新增开展项目成功";
+                    operateMessage = "新增功效特色成功";
                     projectEntity = {
                         itemcode: stringUtil.getUUID(),
                         name : $("#name").val(),
@@ -34,18 +34,31 @@
                         itemid: needData.itemid,
                         itemcode: needData.itemcode,
                         name : $("#name").val(),
+                        dataStatus : "0" ,
                         content : editor.txt.html(),
                     }
-                    operateMessage = "更新开展项目成功";
+                    operateMessage = "更新功效特色成功";
                 }
 
-                fileUtil.handleFile(isUpdate(), projectEntity.itemcode, uploadImg.getFiles()[0]);
+                if(uploadImg.isUpdate()){
+                    ajaxUtil.upload_multi(projectEntity.itemcode, uploadImg.getFiles(), sessionStorage.getItem("username"), sessionStorage.getItem("itemcode"))
+                }
 
                 ajaxUtil.myAjax(null,opreateUrl,projectEntity,function (data) {
                     if(ajaxUtil.success(data)){
                         if(data.code == ajaxUtil.successCode) {
-                            alertUtil.info(operateMessage);
-                            orange.redirect(pathUrl);
+                            var submitConfirmModal = {
+                                modalBodyID :"myPassSuccessTip",
+                                modalTitle : "提示",
+                                modalClass : "modal-lg",
+                                cancelButtonStyle: "display:none",
+                                modalConfirmFun:function (){
+                                    orange.redirect(pathUrl);
+                                    return true;
+                                }
+                            }
+                            var submitConfirm = modalUtil.init(submitConfirmModal);
+                            submitConfirm.show();
                         }else{
                             alertUtil.error(data.msg);
                         }
@@ -53,57 +66,81 @@
                         alertUtil.alert(data.msg);
                     }
                 },false,true,type);
-
+                return false;
             });
 
             $("#btn_insert").unbind().on('click',function () {
-                var projectEntity;
-                var operateMessage;
-                if(!isUpdate()){
-                    operateMessage = "新增开展项目成功";
-                    projectEntity = {
-                        itemcode: stringUtil.getUUID(),
-                        name : $("#name").val(),
-                        content : editor.txt.html(),
-                        dataStatus : "0" ,
-                        dataType : "0",
-                        userCode : sessionStorage.getItem("itemcode")
-                    };
-                }else{
-                    var needData = JSON.parse(localStorage.getItem("rowData"));
-                    projectEntity = {
-                        itemid: needData.itemid,
-                        itemcode: needData.itemcode,
-                        name : $("#name").val(),
-                        content : editor.txt.html(),
-                    }
-                    operateMessage = "更新开展项目成功";
-                }
-
-                fileUtil.handleFile(isUpdate(), projectEntity.itemcode, uploadImg.getFiles()[0]);
-
-                ajaxUtil.myAjax(null,opreateUrl,projectEntity,function (data) {
-                    if(ajaxUtil.success(data)){
-                        if(data.code == ajaxUtil.successCode) {
-                            alertUtil.info(operateMessage);
-                            orange.redirect(pathUrl);
+                var myPublishModalData = {
+                    modalBodyID: "myAuditSubmitProtectionCountry",
+                    modalTitle: "提交确认",
+                    modalClass: "modal-lg",
+                    modalConfirmFun: function () {
+                        var projectEntity;
+                        var operateMessage;
+                        if(!isUpdate()){
+                            operateMessage = "新增功效特色成功";
+                            projectEntity = {
+                                itemcode: stringUtil.getUUID(),
+                                name : $("#name").val(),
+                                content : editor.txt.html(),
+                                dataStatus : "1" ,
+                                dataType : "0",
+                                userCode : sessionStorage.getItem("itemcode")
+                            };
                         }else{
-                            alertUtil.error(data.msg);
+                            var needData = JSON.parse(localStorage.getItem("rowData"));
+                            projectEntity = {
+                                itemid: needData.itemid,
+                                itemcode: needData.itemcode,
+                                name : $("#name").val(),
+                                dataStatus : "1" ,
+                                content : editor.txt.html(),
+                            }
+                            operateMessage = "提交功效特色成功";
                         }
-                    }else {
-                        alertUtil.alert(data.msg);
+
+                        if(uploadImg.isUpdate()) {
+                            ajaxUtil.upload_multi(projectEntity.itemcode, uploadImg.getFiles(), sessionStorage.getItem("username"), sessionStorage.getItem("itemcode"))
+                        }
+
+                        ajaxUtil.myAjax(null,opreateUrl,projectEntity,function (data) {
+                            if(ajaxUtil.success(data)){
+                                if(data.code == ajaxUtil.successCode) {
+                                    var submitConfirmModal = {
+                                        modalBodyID :"myPublishTNextDepart",
+                                        modalTitle : "提示",
+                                        modalClass : "modal-lg",
+                                        cancelButtonStyle: "display:none",
+                                        modalConfirmFun:function (){
+                                            orange.redirect(pathUrl);
+                                        }
+                                    }
+                                    var submitConfirm = modalUtil.init(submitConfirmModal);
+                                    submitConfirm.show();
+                                }else{
+                                    alertUtil.error(data.msg);
+                                }
+                            }else {
+                                alertUtil.alert(data.msg);
+                            }
+                        },false,true,type);
                     }
-                },false,true,type);
+
+                }
+                var x = modalUtil.init(myPublishModalData);
+                x.show();
+                return false;
+
 
             });
 
             (function init() {
                 if (isUpdate()){
+                    $(".titleCSS").text("修改功效特色信息");
                     var tempdata = JSON.parse(localStorage.getItem("rowData"));
                     $("#name").val(tempdata.name);
                     editor.txt.html(tempdata.content);
-                    var img = tempdata.filePath;
-                    uploadImg.setImgSrc(img);
+                    uploadImg.setImgSrcs(tempdata.filePath);
                 }
             }());
 

@@ -11,7 +11,9 @@
 
             var opUrl = "/accountSource/signal-source";
 
-
+            if(sessionStorage.getItem("rolename") == "管理员"){
+                $('#btn_addTask').attr('style',"display:block");
+            }
 
             var aParam = {};
 
@@ -51,7 +53,17 @@
                             var isSuccess = false;
                             ajaxUtil.myAjax(null,opUrl,entity,function (data) {
                                 if(ajaxUtil.success(data)){
-                                    alertUtil.info("删除成功");
+                                    var submitConfirmModal = {
+                                        modalBodyID :"myPassSuccessTip",
+                                        modalTitle : "提示",
+                                        modalClass : "modal-lg",
+                                        cancelButtonStyle: "display:none",
+                                        modalConfirmFun:function (){
+                                            return true;
+                                        }
+                                    }
+                                    var submitConfirm = modalUtil.init(submitConfirmModal);
+                                    submitConfirm.show();
                                     isSuccess = true;
                                     refreshTable();
                                 }
@@ -104,9 +116,9 @@
             function modalFun(reqType,row,view) {
 
                 var myViewTimeModalData = {
-                    modalBodyID: "myTimeModal", //公用的在后面给span加不同的内容就行了，其他模块同理
+                    modalBodyID: "myTimeModal",
                     modalTitle: "维护专家号源",
-                    modalClass: "modal-sm",
+                    modalClass: "modal-md",
                     modalConfirmFun: function () {
                         var isSuccess = false;
                         var doctorCode = $("#docName").val()
@@ -131,7 +143,17 @@
                         var isSuccess = false;
                         ajaxUtil.myAjax(null, opUrl, param, function (data) {
                             if (ajaxUtil.success(data)) {
-                                alertUtil.info("设置成功");
+                                var submitConfirmModal = {
+                                    modalBodyID :"myPassSuccessTip",
+                                    modalTitle : "提示",
+                                    modalClass : "modal-lg",
+                                    cancelButtonStyle: "display:none",
+                                    modalConfirmFun:function (){
+                                        return true;
+                                    }
+                                }
+                                var submitConfirm = modalUtil.init(submitConfirmModal);
+                                submitConfirm.show();
                                 isSuccess = true;
                                 refreshTable();
                             }
@@ -151,7 +173,7 @@
                 ajaxUtil.myAjax(null, "/accountSource/doctor?usercode=" + userCode, null, function (res) {
                     var data = res.data;
                     $("#docName").selectUtil(data);
-                }, true, true, "get");
+                }, false, true, "get");
 
                 if (row != null){
                     $("#docName").val(row.doctorCode)

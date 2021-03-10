@@ -8,7 +8,6 @@
             var webStatus = dictUtil.getDictByCode(dictUtil.DICT_LIST.webStatus);
             //角色加载工具
             url = selectUtil.getRoleTable(sessionStorage.getItem("rolename"),url,"status",webStatus);
-            console.log(url);
             var aParam = {
 
             };
@@ -49,7 +48,18 @@
                                                 return alertUtil.error("文件删除失败，可能已经损坏了");
                                             }
                                         },false,"","get");
-                                        alertUtil.info("删除中医文化信息成功");
+                                        var submitConfirmModal = {
+                                            modalBodyID: "myPassSuccessTip",
+                                            modalTitle: "提示",
+                                            modalClass: "modal-lg",
+                                            cancelButtonStyle: "display:none",
+                                            confirmButtonClass: "btn-danger",
+                                            modalConfirmFun: function () {
+                                                return true;
+                                            }
+                                        }
+                                        var submitConfirm = modalUtil.init(submitConfirmModal);
+                                        submitConfirm.show();
                                         isSuccess = true;
                                         refreshTable();
                                     }else{
@@ -67,69 +77,6 @@
                     myDeleteModal.show();
                 },
 
-                'click .pass' : function (e, value, row, index) {
-                    var myPassModalData ={
-                        modalBodyID :"myPassProtection",
-                        modalTitle : "审核通过",
-                        modalClass : "modal-lg",
-                        modalConfirmFun:function () {
-                            var isSuccess = false;
-                            var submitStatus = {
-                                itemid: row.itemid,
-                                itemcode : row.itemcode,
-                                dataStatus : selectUtil.getPassStatus(sessionStorage.getItem("rolename"),webStatus)
-                            };
-                            ajaxUtil.myAjax(null,operateUrl,submitStatus,function (data) {
-                                console.log(data);
-                                if(ajaxUtil.success(data)){
-                                    if(data.code == ajaxUtil.successCode){
-                                        alertUtil.info("已通过");
-                                        isSuccess = true;
-                                        refreshTable();
-                                    }else{
-                                        alertUtil.error(data.msg);
-                                    }
-                                }
-                            },false,true,"put");
-                            return isSuccess;
-                        }
-
-                    };
-                    var myPassModal = modalUtil.init(myPassModalData);
-                    myPassModal.show();
-                },
-
-                'click .fail' : function (e, value, row, index) {
-                    var myFailTravelModalData ={
-                        modalBodyID :"myNoPassProtection",
-                        modalTitle : "审核不通过",
-                        modalClass : "modal-lg",
-                        modalConfirmFun:function () {
-                            var isSuccess = false;
-                            var submitStatus = {
-                                itemid: row.itemid,
-                                itemcode : row.itemcode,
-                                dataStatus : selectUtil.getFailStatus(sessionStorage.getItem("rolename"),webStatus)
-                            };
-                            ajaxUtil.myAjax(null,operateUrl,submitStatus,function (data) {
-                                if(ajaxUtil.success(data)){
-                                    if(data.code == 88888){
-                                        alertUtil.info("操作成功");
-                                        isSuccess = true;
-                                        refreshTable();
-                                    }else{
-                                        alertUtil.error(data.msg);
-                                    }
-                                }
-                            },false,true,"put");
-                            return isSuccess;
-                        }
-
-                    };
-                    var myFailModal = modalUtil.init(myFailTravelModalData);
-                    myFailModal.show();
-                },
-
                 'click .under-shelf' : function (e, value, row, index) {
                     var myUnderShelfModalData ={
                         modalBodyID :"myUnderShelfProtection",
@@ -145,7 +92,18 @@
                             ajaxUtil.myAjax(null,operateUrl,submitStatus,function (data) {
                                 if(ajaxUtil.success(data)){
                                     if(data.code == 88888){
-                                        alertUtil.success("下架成功");
+                                        var submitConfirmModal = {
+                                            modalBodyID: "myPassSuccessTip",
+                                            modalTitle: "提示",
+                                            modalClass: "modal-lg",
+                                            cancelButtonStyle: "display:none",
+                                            confirmButtonClass: "btn-danger",
+                                            modalConfirmFun: function () {
+                                                return true;
+                                            }
+                                        }
+                                        var submitConfirm = modalUtil.init(submitConfirmModal);
+                                        submitConfirm.show();
                                         isSuccess = true;
                                         refreshTable();
                                     }else{
@@ -177,72 +135,8 @@
                     $("#itemCreateAt").val(row.itemcreateat);
                     $("#dataStatus").val(webStatus[row.dataStatus].text);
                     $("#hotspotImg").attr("src",row.filePath);
-
+                    console.log(myViewModal)
                     myViewModal.show();
-                },
-
-                'click .submit' : function (e, value, row, index) {
-                    var mySubmitModalData ={
-                        modalBodyID :"mySubmitProtection",
-                        modalTitle : "提交",
-                        modalClass : "modal-lg",
-                        modalConfirmFun:function () {
-                            var isSuccess = false;
-                            var submitStatus = {
-                                itemid: row.itemid,
-                                itemcode : row.itemcode,
-                                dataStatus : webStatus[1].id
-                            };
-                            ajaxUtil.myAjax(null,operateUrl,submitStatus,function (data) {
-                                if(ajaxUtil.success(data)){
-                                    if(data.code == 88888){
-                                        alertUtil.info("已提交");
-                                        isSuccess = true;
-                                        refreshTable();
-                                    }else{
-                                        alertUtil.error(data.msg);
-                                    }
-
-                                }
-                            },false,true,"put");
-                            return isSuccess;
-                        }
-
-                    };
-                    var mySubmitModal = modalUtil.init(mySubmitModalData);
-                    mySubmitModal.show();
-                },
-
-                'click .no-submit' : function (e, value, row, index) {
-                    var myNoSubmitModalData ={
-                        modalBodyID :"myNoSubmitProtection",
-                        modalTitle : "取消提交",
-                        modalClass : "modal-lg",
-                        modalConfirmFun:function () {
-                            var isSuccess = false;
-                            var submitStatus = {
-                                itemid: row.itemid,
-                                itemcode : row.itemcode,
-                                dataStatus : webStatus[0].id
-                            };
-                            ajaxUtil.myAjax(null,operateUrl,submitStatus,function (data) {
-                                if(ajaxUtil.success(data)){
-                                    if(data.code == 88888){
-                                        alertUtil.info("已取消提交");
-                                        isSuccess = true;
-                                        refreshTable();
-                                    }else{
-                                        alertUtil.error(data.msg);
-                                    }
-
-                                }
-                            },false,true,"put");
-                            return isSuccess;
-                        }
-
-                    };
-                    var myNoSubmitModal = modalUtil.init(myNoSubmitModalData);
-                    myNoSubmitModal.show();
                 },
 
                 'click .publish' : function (e, value, row, index) {
@@ -260,7 +154,17 @@
                             ajaxUtil.myAjax(null,operateUrl,submitStatus,function (data) {
                                 if(ajaxUtil.success(data)){
                                     if(data.code == 88888){
-                                        alertUtil.info("已发布");
+                                        var submitConfirmModal = {
+                                            modalBodyID :"myPublishToWechat",
+                                            modalTitle : "提示",
+                                            modalClass : "modal-lg",
+                                            cancelButtonStyle: "display:none",
+                                            modalConfirmFun:function (){
+                                                return true;
+                                            }
+                                        }
+                                        var submitConfirm = modalUtil.init(submitConfirmModal);
+                                        submitConfirm.show();
                                         isSuccess = true;
                                         refreshTable();
                                     }else{
@@ -284,8 +188,6 @@
                 orange.redirect(pathUrl);
             });
 
-            var pl = dictUtil.getDictByCode(dictUtil.DICT_LIST.showStatus);
-            $("#chargePersonSearch").selectUtil(pl);
 
 
             var aCol = [
@@ -312,11 +214,7 @@
             }
 
 
-            bootstrapTableUtil.globalSearch("table",url,aParam, aCol);
-
-            var allTableData = $("#table").bootstrapTable("getData");
-            localStorage.setItem('2',JSON.stringify(allTableData))
-            obj2=JSON.parse(localStorage.getItem("2"));
+            bootstrapTableUtil.globalSearch("table",url,aParam, aCol, "dataStatus");
 
         })
 })();

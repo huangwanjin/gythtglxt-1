@@ -37,35 +37,87 @@
             }
 
             $("#saveBtn").unbind('click').on('click', function () {
+                var saveConfirmModal = {
+                    modalBodyID: "myUpdateConfirm",
+                    modalTitle: "提示",
+                    modalClass : "modal-lg",
+                    modalConfirmFun: function () {
+                        var param = generateParam();
+                        param.status = "0";
+                        if (uploadImg.isUpdate()) {
+                            ajaxUtil.upload_multi(itemcode, uploadImg.getFiles(), sessionStorage.getItem("username"), sessionStorage.getItem("itemcode"));
+                        }
 
-                var param = generateParam();
-                param.status = "0";
-                if (uploadImg.isUpdate()) {
-                    ajaxUtil.fileAjax(itemcode, uploadImg.getFiles()[0], "lrt", "lrt")
-                }
-
-                ajaxUtil.myAjax(null, opUrl, param, function (data) {
-                    if (ajaxUtil.success(data)) {
-                        orange.redirect(pathUrl);
-                    } else {
-                        alert(data.msg);
+                        ajaxUtil.myAjax(null, opUrl, param, function (data) {
+                            if (ajaxUtil.success(data)) {
+                                alertUtil.success("保存成功")
+                                orange.redirect(pathUrl);
+                            } else {
+                                alert(data.msg);
+                            }
+                        }, true, true, type);
+                        var submitConfirmModal = {
+                            modalBodyID :"myPassSuccessTip",
+                            modalTitle : "提示",
+                            modalClass : "modal-lg",
+                            cancelButtonStyle: "display:none",
+                            confirmButtonClass: "btn-danger",
+                            modalConfirmFun:function (){
+                                orange.redirect(pathUrl)
+                                return true;
+                            }
+                        }
+                        saveConfirm.hide();
+                        var submitConfirm = modalUtil.init(submitConfirmModal);
+                        submitConfirm.show();
                     }
-                }, true, "123", type);
+                }
+                var saveConfirm = modalUtil.init(saveConfirmModal);
+                saveConfirm.show()
+
+
 
                 return false;
             });
 
             $("#submitBtn").unbind('click').on('click', function () {
-                var param = generateParam();
-                param.status = "1";
-                param.reason = "";
-                ajaxUtil.myAjax(null, opUrl, param, function (data) {
-                    if (ajaxUtil.success(data)) {
-                        orange.redirect(pathUrl)
-                    } else {
-                        alert(data.msg)
+                var submitConfirmModal = {
+                    modalBodyID: "myAuditSubmitProtectionCountry",
+                    modalTitle: "提示",
+                    modalClass : "modal-lg",
+                    modalConfirmFun: function () {
+                        var param = generateParam();
+                        param.status = "1";
+                        param.reason = "";
+                        if (uploadImg.isUpdate()) {
+                            ajaxUtil.upload_multi(itemcode, uploadImg.getFiles(), sessionStorage.getItem("username"), sessionStorage.getItem("itemcode"))
+                        }
+                        ajaxUtil.myAjax(null, opUrl, param, function (data) {
+                            if (ajaxUtil.success(data)) {
+                                alertUtil.success("修改成功，等待审核")
+
+                            } else {
+                                alert(data.msg)
+                            }
+                        }, true, true, type);
+                        var submitConfirmModal = {
+                            modalBodyID :"myPassSuccessTip",
+                            modalTitle : "提示",
+                            modalClass : "modal-lg",
+                            cancelButtonStyle: "display:none",
+                            confirmButtonClass: "btn-danger",
+                            modalConfirmFun:function (){
+                                orange.redirect(pathUrl)
+                                return true;
+                            }
+                        }
+                        submitCon.hide();
+                        var submitConfirm = modalUtil.init(submitConfirmModal);
+                        submitConfirm.show();
                     }
-                }, true, "123", type);
+                }
+                var submitCon = modalUtil.init(submitConfirmModal);
+                submitCon.show()
 
                 return false;
             });
@@ -90,7 +142,7 @@
                 });
                 $("#address").val(tempdata.hospitalAdress);
                 editor.txt.html(tempdata.introduce);
-                uploadImg.setImgSrc(tempdata.filePath);
+                uploadImg.setImgSrcs(tempdata.filePath);
                 itemcode = tempdata.itemcode;
                 itemid = tempdata.itemid;
                 if ( tempdata.status !== "6"){
@@ -106,8 +158,6 @@
                 }
             };
             init();
-
-
         })
 })();
 

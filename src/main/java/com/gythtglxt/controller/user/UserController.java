@@ -53,40 +53,64 @@ public class UserController {
      */
     @RequestMapping(value = "/updatepwd", method = RequestMethod.PUT)
     public ResponseData UpdatePassword(UpdatePwdDto updatePwdDto) {
-        if (StringUtils.isEmpty(updatePwdDto.getNewPassword()) || StringUtils.isEmpty(updatePwdDto.getCheckNewPassword())) {
+        if (StringUtils.isBlank(updatePwdDto.getNewPassword()) || StringUtils.isBlank(updatePwdDto.getCheckNewPassword()) ||
+                StringUtils.isBlank(updatePwdDto.getMobilePhone()) || StringUtils.isBlank(updatePwdDto.getPassword())) {
             return new ResponseData(EmBusinessError.INPUT_NOT_NULL);
         } else {
-            if (updatePwdDto.getNewPassword().equals(updatePwdDto.getCheckNewPassword())) {
-                ResponseData rd = userService.UpdatePassword(updatePwdDto);
-                if (rd.getCode().equals(EmBusinessError.success.getErrCode())) {
-                    return new ResponseData(EmBusinessError.success);
-                } else {
-                    return new ResponseData(EmBusinessError.MODIFY_USER_MESSAGE_FAILED);
-                }
+            if (updatePwdDto.getPassword().equals(updatePwdDto.getNewPassword())) {
+                return new ResponseData(EmBusinessError.OPWD_EQUAL_NPWD);
             } else {
-                return new ResponseData(EmBusinessError.NEWPASSWORD_NOT_EQUAL);
+                if (updatePwdDto.getNewPassword().equals(updatePwdDto.getCheckNewPassword())) {
+                    ResponseData rd = userService.UpdatePassword(updatePwdDto);
+                    if (rd.getCode().equals(EmBusinessError.success.getErrCode())) {
+                        return new ResponseData(EmBusinessError.success);
+                    } else {
+                        return new ResponseData(EmBusinessError.MODIFY_USER_MESSAGE_FAILED);
+                    }
+                } else {
+                    return new ResponseData(EmBusinessError.NEWPASSWORD_NOT_EQUAL);
+                }
             }
         }
     }
 
+    /**
+     * 个人信息
+     * @return
+     */
     @RequestMapping(value = "/usermsg", method = RequestMethod.GET)
     public ResponseData selectOne() {
         UserDO userDO = userService.selectByName(usernameUtil.getOperateUser());
         return new ResponseData(EmBusinessError.success, userDO);
     }
 
+    /**
+     * 修改个人信息
+     * @param userDO
+     * @return
+     */
     @RequestMapping(value = "/updateusermsg", method = RequestMethod.POST)
     public ResponseData updateUserMsg(@RequestBody UserDO userDO) {
         userService.UpdateUserMsg(userDO);
         return new ResponseData(EmBusinessError.success);
     }
 
+    /**
+     * 修改用户头像
+     * @param userDO
+     * @return
+     */
     @RequestMapping(value = "/updateuserimg", method = RequestMethod.POST)
     public ResponseData updateUserPortrait(@RequestBody UserDO userDO) {
         userService.UpdateUserPortrait(userDO);
         return new ResponseData(EmBusinessError.success);
     }
 
+    /**
+     * 用户未录入机构信息点击返回按钮则删除用户信息
+     * @param userDtO
+     * @return
+     */
     @RequestMapping(value = "/deletuser", method = RequestMethod.POST)
     public ResponseData deleteUserByUsername(@RequestBody UserDto userDtO){
         userService.deleteUserByUsername(userDtO);
